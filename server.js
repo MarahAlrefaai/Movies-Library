@@ -4,6 +4,7 @@ const express = require('express');
 const app = express();
 const jsonData = require('./MovieData/data.json');
 const axios = require("axios");
+
 dotenv.config();
 
 
@@ -88,10 +89,11 @@ function secondfun(req, res) {
 function addFavmoveHandler(req,res){
   let movie = req.body;
 
-  const sql = `INSERT INTO favmovie( release, poster_path, overview) VALUES($1, $2, $3)RETURNING * ;`
 
-  let values = [movie.release, movie.poster_path, movie.overview]
-  
+  const sql = `INSERT INTO favMovies( title,release_date, poster_path, overview,comment) VALUES($1, $2, $3, $4, $5)RETURNING * ;`
+
+  let values = [movie.title,movie.release_date, movie.poster_path, movie.overview,movie.comment];
+
   client.query(sql, values).then((data) => {
      
       return res.status(201).json(data.rows[0]);
@@ -101,7 +103,9 @@ function addFavmoveHandler(req,res){
 };
 
 function getAllFavMovieHandler(req, res){
-  const sql = `SELECT * FROM favmovie`;
+
+  const sql = `SELECT * FROM favMovies`;
+
   client.query(sql).then(data => {
       return res.status(200).json(data.rows);
   }).catch(error => {
@@ -124,4 +128,6 @@ client.connect().then(() => {
   
   app.listen(PORT, () => {
       console.log(`I am using port ${PORT}`);
+
   });});
+
