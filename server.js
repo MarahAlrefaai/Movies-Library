@@ -1,66 +1,79 @@
 `use strict`;
+const dotenv = require('dotenv');
 const express = require('express');
 const app = express();
 const jsonData = require('./MovieData/data.json');
 const axios = require("axios");
-const dotenv = require('dotenv');
 dotenv.config();
+
+
 const APIKEY = process.env.APIKEY;
 const PORT = process.env.PORT;
-app.get("/trending", funfortask12);
-
+const pg = require("pg");
+const DATABASE_URL = process.env.DATABASE_URL;
+const client = new pg.Client(DATABASE_URL);
+app.use(express.json());
+app.get("/trending", getMoviesHandler);
+app.post("/addFavmovie", addFavmoveHandler);
+app.get("/getAllFavmovie", getAllFavMovieHandler);
 app.get("/", firstfun);
 app.get("/favorite", secondfun);
+app.get('/randompath',APIfunction)
 app.get("/searchmovie", searchMovieHandler);
+app.use(errorHandler);
 
 
-function ResponsExpress(id, title, release, poster_path, overview) {
-  this.id = id;
-  this.title1 = title;
-  this.release - release
-  this.poster_path1 = poster_path;
-  this.overview1 = overview;
-}
-function errorHandler(error, req, res) {
-  const err = {
-    status: 500,
-    message: error
-  }
-
-  res.status(500).send(err);
-}
-function DataConst(title, poster_path, overview) {
-  this.title1 = title;
-  this.poster_path1 = poster_path;
-  this.overview1 = overview;
-}
+function DatamovieConstructer(id,title,release_date,poster_path,overview){
+  this.id=id;
+  this.title =title,
+  this.release_date=release_date;
+  this.poster_path = poster_path,
+  this.overview =overview 
+};
 
 function searchMovieHandler(req,res){
-  /*console.log(req.query);*/
-let searchq=req.query.search;
-let movie=[];
-axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${APIKEY}&query=${searchq}`).then ( value =>{
-  console.log(value.data.results.array.forEach(element => {
-    value.data.results.forEach(movies => {
-      let movie = new DataConst (movies.title,movies.poster_path,movies.overview);
-      myArray.push(movie);
-  });return res.status(200).json(myArray);
-}).catch(error => {
-  errorHandler(error, req,res);})
+  let searchquery = req.query.search;
+  console.log(req.query.search);
+  let arr1=[];
+  axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${APIKEY}&query=${searchquery}`).then(value => {
+      value.data.results.forEach(movies => {
+          let movie = new DatamovieConstructer (movies.id,movies.
+            title,movies.release_date,movies.poster_path,movies.overview);
+          arr1.push(movie);
 
-  )})};
-
-function funfortask12(req, res) {
-
-  axios.get(`https://api.themoviedb.org/3/movie/550?api_key=${APIKEY}`).then(value => {
-
-    let mymovie = new ResponsExpress(value.data.id, value.data.title, value.data.release_date, value.data.poster_path, value.data.overview);
-    return res.status(200).json(mymovie);
+      })
+      return res.status(200).json(arr1);
   }).catch(error => {
-    errorHandler(error, req, res);
+      errorHandler(error, req,res);
+    
   });
 }
 
+function getMoviesHandler(req,res){
+  let arr1=[];
+  axios.get(`https://api.themoviedb.org/3/trending/all/day?api_key=${APIKEY}`).then(value => {
+      // console.log(value.data);
+          value.data.results.forEach(value=>{
+          let movie = new DatamovieConstructer (value.id,value.title,value.release_date,value.poster_path,value.overview);            
+              arr1.push(movie)
+          })
+       return res.status(200).json(arr1);
+  }).catch(error => {
+      errorHandler(error, req,res);
+  
+  });
+};
+
+function APIfunction(req,res){
+  let arr1=[];
+axios.get(`https://api.themoviedb.org/3/movie/changes?api_key=${APIKEY}&page=1`).then(value =>{
+value.data.results.forEach(value=>{
+   arr1.push(value);
+});return res.status(200).json(arr1);
+}).catch(error => {
+   errorHandler(error, req,res);
+});
+};
 
 function firstfun(req, res) {
   let mydata = new ResponsExpress(jsonData.title, jsonData.poster_path, jsonData.overview)
@@ -71,8 +84,44 @@ function secondfun(req, res) {
   return res.status(200).send("hello");
 }
 
-app.listen(PORT, () => {
-  console.log("Welcome to Favorite Page");
-});
 
+function addFavmoveHandler(req,res){
+  let movie = req.body;
 
+  const sql = `INSERT INTO favmovie( release, poster_path, overview) VALUES($1, $2, $3)RETURNING * ;`
+
+  let values = [movie.release, movie.poster_path, movie.overview]
+  
+  client.query(sql, values).then((data) => {
+     
+      return res.status(201).json(data.rows[0]);
+  }).catch(error => {
+      errorHandler(error, req, res);
+  })
+};
+
+function getAllFavMovieHandler(req, res){
+  const sql = `SELECT * FROM favmovie`;
+  client.query(sql).then(data => {
+      return res.status(200).json(data.rows);
+  }).catch(error => {
+      errorHandler(error, req,res);
+  })
+}
+function notFountHandler(req,res){
+  res.status(404).send("No endpoint with this name");
+}
+
+function errorHandler(error, req, res){
+  const err = {
+      status : 500,
+      message : error
+  }
+
+  res.status(500).send(err);
+}
+client.connect().then(() => {
+  
+  app.listen(PORT, () => {
+      console.log(`I am using port ${PORT}`);
+  });});
