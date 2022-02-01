@@ -15,7 +15,11 @@ movie app that can check the latest movies based on categories.
 
 ## Project Features
 <!-- What are the features included in you app -->
-
+### task 11
 What observations or questions do you have about what you’ve learned so far? no 
 How long did it take you to complete this assignment? And, before you started, how long did you think it would take you to complete this assignment?
 3 hours
+
+### task 12 
+What observations or questions do you have about what you’ve learned so far?no 
+How long did it take you to complete this assignment? And, before you started, how long did you think it would take you to complete this assignment? 5 hours
