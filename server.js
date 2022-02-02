@@ -21,8 +21,47 @@ app.get("/", firstfun);
 app.get("/favorite", secondfun);
 app.get('/randompath',APIfunction)
 app.get("/searchmovie", searchMovieHandler);
-app.use(errorHandler);
 
+app.get("/getFavmovie/:id", getFavmoviesHandler);
+app.put("/updateFavmovie/:id", updateFavmovieHandler);
+app.delete("/deleteFavmovie/:id", deleteFavmovieHandler)
+app.use(errorHandler);
+function deleteFavmovieHandler(req,res){
+  const id = req.params.id;
+  console.log(req.params.id);
+    const sql = `DELETE FROM favmovies WHERE id=${id};`
+
+    client.query(sql).then(() => {
+        return res.status(204).json([]);
+    }).catch(error => {
+        errorHandler(error, req, res);
+    })
+}
+function updateFavmovieHandler(req, res){
+  const id = req.params.id;
+  const movie = req.body;
+  const sql = `UPDATE favmovies SET comment=$1 WHERE id=${id} RETURNING *;`
+  const values = [movie.comment];
+  client.query(sql,values).then(data => {
+      // return res.status(204).send([]);
+      return res.status(200).json(data.rows);
+  }).catch(error => {
+      errorHandler(error, req, res);
+  })};
+
+function getFavmoviesHandler(req,res){
+  console.log(req.params);
+  const id =JSON.parse(req.params.id);
+  const sql = `SELECT * FROM favmovies WHERE id=${id}`;
+
+  client.query(sql).then(data => {
+      
+      res.status(200).json(data.rows);
+  }).catch(error => {
+      console.log(error);
+      errorHandler(error, req, res);
+  })
+}
 
 function DatamovieConstructer(id,title,release_date,poster_path,overview){
   this.id=id;
@@ -90,7 +129,8 @@ function addFavmoveHandler(req,res){
   let movie = req.body;
 
 
-  const sql = `INSERT INTO favMovies( title,release_date, poster_path, overview,comment) VALUES($1, $2, $3, $4, $5)RETURNING * ;`
+  const sql = `INSERT INTO favmovies( title,release_date, poster_path, overview,comment) VALUES($1, $2, $3, $4, $5)RETURNING * ;`
+
 
   let values = [movie.title,movie.release_date, movie.poster_path, movie.overview,movie.comment];
 
@@ -104,7 +144,7 @@ function addFavmoveHandler(req,res){
 
 function getAllFavMovieHandler(req, res){
 
-  const sql = `SELECT * FROM favMovies`;
+  const sql = `SELECT * FROM favmovies`;
 
   client.query(sql).then(data => {
       return res.status(200).json(data.rows);
