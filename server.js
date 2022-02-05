@@ -119,7 +119,8 @@ value.data.results.forEach(value=>{
 };
 
 function firstfun(req, res) {
-  let mydata = new ResponsExpress(jsonData.title, jsonData.poster_path, jsonData.overview)
+  let mydata = new DatamovieConstructer(jsonData.id,jsonData.title,jsonData.release_date,jsonData.poster_path, jsonData.overview)
+  
   return res.status(200).json(mydata);
 }
 
